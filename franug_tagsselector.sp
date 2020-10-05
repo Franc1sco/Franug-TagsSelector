@@ -22,7 +22,7 @@
 
 #define IDAYS 26
 
-#define VERSION "0.1"
+#define VERSION "0.1.1"
 
 char g_sClantag[MAXPLAYERS + 1][128], g_sChattag[MAXPLAYERS + 1][128],
 	g_sColorChattag[MAXPLAYERS + 1][128];
@@ -107,6 +107,8 @@ public Action Command_Clantag(int client, int args)
 
 public void OnClientSettingsChanged(int client)
 {
+	if (!IsClientInGame(client) || IsFakeClient(client))return;
+	
 	if(!StrEqual(g_sClantag[client], "none"))
 		CS_SetClientClanTag(client, g_sClantag[client]);
 }
@@ -228,6 +230,9 @@ public int CheckSQLSteamIDCallback(Handle owner, Handle hndl, char [] error, any
 	SQL_FetchString(hndl, 1, g_sChattag[client], 128);
 	SQL_FetchString(hndl, 2, g_sColorChattag[client], 128);
 	
+	if(!StrEqual(g_sClantag[client], "none") && IsClientInGame(client))
+		CS_SetClientClanTag(client, g_sClantag[client]);
+	
 	if(!StrEqual(g_sChattag[client], "none"))
 		ChatProcessor_AddClientTag(client, g_sChattag[client]);
 		
@@ -271,10 +276,18 @@ public void OnPluginEnd()
 public void OnClientDisconnect(int client)
 {
 	if(!IsFakeClient(client) && g_bChecked[client]) SaveSQLCookies(client);
+	
+	g_sClantag[client] = "none";
+	g_sColorChattag[client] = "none";
+	g_sChattag[client] = "none";
 }
 
 public void OnClientPostAdminCheck(int client)
 {
+	g_sClantag[client] = "none";
+	g_sColorChattag[client] = "none";
+	g_sChattag[client] = "none";
+	
 	if(!IsFakeClient(client)) CheckSQLSteamID(client);
 }
 
