@@ -1,8 +1,15 @@
 # Franug-TagsSelector
 
-Require: https://github.com/Drixevel/Chat-Processor
+### Required: 
 
-Commands:
+- https://github.com/Drixevel/Chat-Processor
 
-sm_setmyclantag
-sm_setmychattag
+### Commands:
+
+- sm_setmyclantag
+- sm_setmychattag
+
+### TODO List:
+
+- The chat colors selection.
+- The disallowed list.
