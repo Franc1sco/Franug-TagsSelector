@@ -22,7 +22,7 @@
 
 #define IDAYS 26
 
-#define VERSION "0.1.1"
+#define VERSION "0.1.2"
 
 char g_sClantag[MAXPLAYERS + 1][128], g_sChattag[MAXPLAYERS + 1][128],
 	g_sColorChattag[MAXPLAYERS + 1][128];
@@ -67,7 +67,9 @@ public Action Command_Chattag(int client, int args)
 	if(!StrEqual(g_sChattag[client], "none"))
 		ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
 		
-	strcopy(g_sChattag[client], 128, SayText);
+	//strcopy(g_sChattag[client], 128, SayText);
+	
+	Format(g_sChattag[client], 128, " %s", SayText);
 	
 	ChatProcessor_AddClientTag(client, g_sChattag[client]);
 	
