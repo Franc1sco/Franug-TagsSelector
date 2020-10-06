@@ -47,7 +47,7 @@ char C_Tag[][] = {"none", "{darkred}", "{green}", "{lightgreen}", "{red}", "{blu
 
 #define IDAYS 26
 
-#define VERSION "0.3"
+#define VERSION "0.3.1"
 
 char g_sClantag[MAXPLAYERS + 1][128], g_sChattag[MAXPLAYERS + 1][128],
 	g_sColorChattag[MAXPLAYERS + 1][128];
@@ -166,14 +166,14 @@ public Action Command_Chattag(int client, int args)
 		
 	//strcopy(g_sChattag[client], 128, SayText);
 	
-	Format(g_sChattag[client], 128, " %s", SayText);
+	Format(g_sChattag[client], 128, " %s ", SayText);
 	
 	ChatProcessor_AddClientTag(client, g_sChattag[client]);
 	
 	if(!StrEqual(g_sColorChattag[client], "none"))
 		ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
 	
-	ReplyToCommand(client, "Chattag changed to %s", g_sChattag[client]);
+	ReplyToCommand(client, "Chattag changed to %s", SayText);
 		
 	return Plugin_Handled;
 }
