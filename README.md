@@ -16,5 +16,4 @@
 
 ### TODO List:
 
-- The chat colors selection.
 - The disallowed list.
