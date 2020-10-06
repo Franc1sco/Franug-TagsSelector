@@ -47,7 +47,7 @@ char C_Tag[][] = {"none","rainbow", "{darkred}", "{green}", "{lightgreen}", "{re
 
 #define IDAYS 26
 
-#define VERSION "0.4.1"
+#define VERSION "0.4.2"
 
 char g_sClantag[MAXPLAYERS + 1][128], g_sChattag[MAXPLAYERS + 1][128],
 	g_sColorChattag[MAXPLAYERS + 1][128];
@@ -94,13 +94,25 @@ public int MenuHandler1(Menu menu, MenuAction action, int client, int param2)
     /* If an option was selected, tell the client about the item. */
     if (action == MenuAction_Select)
     {
-		char color[64];
+		char color[128];
 		menu.GetItem(param2, color, sizeof(color));
         
-		strcopy(g_sColorChattag[client], 64, color);
+		strcopy(g_sColorChattag[client], 128, color);
         
-		if(!StrEqual(g_sChattag[client], "none") && !StrEqual(g_sColorChattag[client], "rainbow"))
-        	ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
+		if(!StrEqual(g_sChattag[client], "none"))
+		{
+			if(!StrEqual(g_sColorChattag[client], "rainbow"))
+        		ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
+			else{
+				ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
+		
+				char newbuffer[128];
+				String_Rainbow(g_sChattag[client], newbuffer, 128);
+				strcopy(_temp[client], 128, newbuffer);
+				
+				ChatProcessor_AddClientTag(client, _temp[client]);
+			}
+        }
     
     }
     /* If the menu has ended, destroy it */
@@ -164,7 +176,13 @@ public Action Command_Chattag(int client, int args)
 	}
 	
 	if(!StrEqual(g_sChattag[client], "none"))
-		ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
+	{
+		if(!StrEqual(g_sColorChattag[client], "rainbow"))
+			ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
+		else{
+			ChatProcessor_RemoveClientTag(client, _temp[client]);
+		}
+	}
 		
 	//strcopy(g_sChattag[client], 128, SayText);
 	
@@ -172,10 +190,24 @@ public Action Command_Chattag(int client, int args)
 	
 	ChatProcessor_AddClientTag(client, g_sChattag[client]);
 	
+	//if(!StrEqual(g_sColorChattag[client], "none") && !StrEqual(g_sColorChattag[client], "rainbow"))
+	//	ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
+	
 	if(!StrEqual(g_sColorChattag[client], "none"))
 	{
+		
 		if(!StrEqual(g_sColorChattag[client], "rainbow"))
 			ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
+		else{
+			
+			ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
+		
+			char newbuffer[128];
+			String_Rainbow(g_sChattag[client], newbuffer, 128);
+			strcopy(_temp[client], 128, newbuffer);
+			
+			ChatProcessor_AddClientTag(client, _temp[client]);
+		}
 	}
 	
 	ReplyToCommand(client, "Chattag changed to %s", SayText);
@@ -358,8 +390,22 @@ public int CheckSQLSteamIDCallback(Handle owner, Handle hndl, char [] error, any
 	if(!StrEqual(g_sChattag[client], "none"))
 		ChatProcessor_AddClientTag(client, g_sChattag[client]);
 		
-	if(!StrEqual(g_sColorChattag[client], "none") && !StrEqual(g_sColorChattag[client], "rainbow"))
-		ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
+	if(!StrEqual(g_sColorChattag[client], "none"))
+	{
+		
+		if(!StrEqual(g_sColorChattag[client], "rainbow"))
+			ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
+		else{
+			
+			ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
+		
+			char newbuffer[128];
+			String_Rainbow(g_sChattag[client], newbuffer, 128);
+			strcopy(_temp[client], 128, newbuffer);
+			
+			ChatProcessor_AddClientTag(client, _temp[client]);
+		}
+	}
 	
 	g_bChecked[client] = true;
 }
@@ -549,6 +595,7 @@ int RandomColor()
 
 ////////////////////
 // Chat hook
+/*
 public Action OnClientSayCommand(int client, const char[] command, const char[] sArgs)
 {
 	if (StrContains(command, "say") == -1)return;
@@ -564,7 +611,7 @@ public Action OnClientSayCommand(int client, const char[] command, const char[] 
 		ChatProcessor_AddClientTag(client, _temp[client]);
 		
 	}
-}
+}*/
 
 public void OnClientSayCommand_Post(int client, const char[] command, const char[] sArgs)
 {
@@ -572,9 +619,18 @@ public void OnClientSayCommand_Post(int client, const char[] command, const char
 	
 	if(StrEqual(g_sColorChattag[client], "rainbow") && !StrEqual(g_sChattag[client], "none"))
 	{
+		//ChatProcessor_RemoveClientTag(client, _temp[client]);
+		
+		//ChatProcessor_AddClientTag(client, g_sChattag[client]);
+		
+		
 		ChatProcessor_RemoveClientTag(client, _temp[client]);
 		
-		ChatProcessor_AddClientTag(client, g_sChattag[client]);
+		char newbuffer[128];
+		String_Rainbow(g_sChattag[client], newbuffer, 128);
+		strcopy(_temp[client], 128, newbuffer);
+		
+		ChatProcessor_AddClientTag(client, _temp[client]);
 		
 	}
 }
