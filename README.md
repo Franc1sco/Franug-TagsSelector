@@ -13,6 +13,7 @@
 
 - sm_setmyclantag
 - sm_setmychattag
+- sm_setmycolorchattag
 
 ### TODO List:
 
