@@ -47,7 +47,7 @@ char C_Tag[][] = {"none", "{darkred}", "{green}", "{lightgreen}", "{red}", "{blu
 
 #define IDAYS 26
 
-#define VERSION "0.2"
+#define VERSION "0.3"
 
 char g_sClantag[MAXPLAYERS + 1][128], g_sChattag[MAXPLAYERS + 1][128],
 	g_sColorChattag[MAXPLAYERS + 1][128];
@@ -61,6 +61,8 @@ bool g_bIsMySQl;
 // DB handle
 Handle g_hDB = INVALID_HANDLE;
 
+Handle _blacklist;
+
 public void OnPluginStart()
 {
 	RegConsoleCmd("sm_setmyclantag", Command_Clantag);
@@ -68,6 +70,13 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_setmycolorchattag", Command_ColorChattag);
 	
 	SQL_TConnect(OnSQLConnect, "franug_tagsselector");
+	
+	_blacklist = CreateArray(128);
+}
+
+public void OnMapStart()
+{
+	LoadList();
 }
 
 public Action Command_ColorChattag(int client, int args)
@@ -135,7 +144,22 @@ public Action Command_Chattag(int client, int args)
 		return Plugin_Handled;
 	}
 	
-	// todo block disallowed works
+	int blacklistsize = GetArraySize(_blacklist);
+	
+	if(blacklistsize > 0)
+	{
+		char word[128];
+		for (int i = 0; i < blacklistsize; i++)
+		{
+			GetArrayString(_blacklist, i, word, 128);
+			
+			if(StrContains(SayText, word, false) != -1)
+			{
+				ReplyToCommand(client, "You tried to use a disallowed word");
+				return Plugin_Handled;
+			}
+		}
+	}
 	
 	if(!StrEqual(g_sChattag[client], "none"))
 		ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
@@ -172,7 +196,22 @@ public Action Command_Clantag(int client, int args)
 		return Plugin_Handled;
 	}
 	
-	// todo block disallowed works
+	int blacklistsize = GetArraySize(_blacklist);
+	
+	if(blacklistsize > 0)
+	{
+		char word[128];
+		for (int i = 0; i < blacklistsize; i++)
+		{
+			GetArrayString(_blacklist, i, word, 128);
+			
+			if(StrContains(SayText, word, false) != -1)
+			{
+				ReplyToCommand(client, "You tried to use a disallowed word");
+				return Plugin_Handled;
+			}
+		}
+	}
 		
 	strcopy(g_sClantag[client], 128, SayText);
 	
@@ -392,4 +431,40 @@ public void PruneDatabase()
 public int PruneDatabaseCallback(Handle owner, Handle hndl, char [] error, any data)
 {
 
+}
+
+public LoadList()
+{
+	ClearArray(_blacklist);
+	
+	char path[PLATFORM_MAX_PATH];
+	BuildPath(PathType:Path_SM, path, sizeof(path), "configs/tagsselector_blacklist.txt");
+	
+	Handle file = OpenFile(path, "r");
+	if(file == INVALID_HANDLE)
+	{
+		PrintToServer("Unable to read file %s", path);
+		return;
+	}
+	
+	char line[128];
+	while(!IsEndOfFile(file) && ReadFileLine(file, line, sizeof(line)))
+	{
+		if (line[0] == ';' || !IsCharAlpha(line[0]))
+		{
+			continue;
+		}
+		int len = strlen(line);
+		for (int i; i < len; i++)
+		{
+			if (IsCharSpace(line[i]) || line[i] == ';')
+			{
+				line[i] = '\0';
+				break;
+			}
+		}
+		PushArrayString(_blacklist, line);
+	}
+	
+	CloseHandle(file);
 }
