@@ -20,9 +20,34 @@
 #include <sdktools>
 #include <chat-processor>
 
+enum
+{
+ 	Color_Default = 0,
+	Color_Darkred,
+	Color_Green,
+	Color_Lightgreen,
+	Color_Red,
+	Color_Blue,
+	Color_Olive,
+	Color_Lime,
+	Color_Lightred,
+	Color_Purple,
+	Color_Grey,
+	Color_Yellow,
+	Color_Orange,
+	Color_Bluegrey,
+	Color_Lightblue,
+	Color_Darkblue,
+	Color_Grey2,
+	Color_Orchid,
+	Color_Lightred2
+}
+
+char C_Tag[][] = {"none", "{darkred}", "{green}", "{lightgreen}", "{red}", "{blue}", "{olive}", "{lime}", "{lightred}", "{purple}", "{grey}", "{yellow}", "{orange}", "{bluegrey}", "{lightblue}", "{darkblue}", "{grey2}", "{orchid}", "{lightred2}"};
+
 #define IDAYS 26
 
-#define VERSION "0.1.2"
+#define VERSION "0.2"
 
 char g_sClantag[MAXPLAYERS + 1][128], g_sChattag[MAXPLAYERS + 1][128],
 	g_sColorChattag[MAXPLAYERS + 1][128];
@@ -40,8 +65,56 @@ public void OnPluginStart()
 {
 	RegConsoleCmd("sm_setmyclantag", Command_Clantag);
 	RegConsoleCmd("sm_setmychattag", Command_Chattag);
+	RegConsoleCmd("sm_setmycolorchattag", Command_ColorChattag);
 	
 	SQL_TConnect(OnSQLConnect, "franug_tagsselector");
+}
+
+public Action Command_ColorChattag(int client, int args)
+{
+	Menu_Colors(client);
+	
+		
+	return Plugin_Handled;
+}
+
+public int MenuHandler1(Menu menu, MenuAction action, int client, int param2)
+{
+    /* If an option was selected, tell the client about the item. */
+    if (action == MenuAction_Select)
+    {
+		char color[64];
+		menu.GetItem(param2, color, sizeof(color));
+        
+		strcopy(g_sColorChattag[client], 64, color);
+        
+		if(!StrEqual(g_sChattag[client], "none"))
+        	ChatProcessor_SetTagColor(client, g_sChattag[client], color);
+    
+    }
+    /* If the menu has ended, destroy it */
+    else if (action == MenuAction_End)
+    {
+        delete menu;
+    }
+}
+ 
+public Action Menu_Colors(int client)
+{
+    Menu menu = new Menu(MenuHandler1);
+    menu.SetTitle("Select your chattag color");
+    char name[64];
+    for (int i = Color_Default; i < Color_Lightred2; i++)
+    {
+    	Format(name, 64, C_Tag[i]);
+    	ReplaceString(name, 64, "{", "");
+    	ReplaceString(name, 64, "}", "");
+    	
+    	menu.AddItem(C_Tag[i], name);
+    }
+    //menu.AddItem("yes", "Yes");
+    menu.ExitButton = false;
+    menu.Display(client, 0);
 }
 
 public Action Command_Chattag(int client, int args)
@@ -72,6 +145,9 @@ public Action Command_Chattag(int client, int args)
 	Format(g_sChattag[client], 128, " %s", SayText);
 	
 	ChatProcessor_AddClientTag(client, g_sChattag[client]);
+	
+	if(!StrEqual(g_sColorChattag[client], "none"))
+		ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
 	
 	ReplyToCommand(client, "Chattag changed to %s", g_sChattag[client]);
 		
