@@ -43,11 +43,11 @@ enum
 	Color_Lightred2
 }
 
-char C_Tag[][] = {"none", "{darkred}", "{green}", "{lightgreen}", "{red}", "{blue}", "{olive}", "{lime}", "{lightred}", "{purple}", "{grey}", "{yellow}", "{orange}", "{bluegrey}", "{lightblue}", "{darkblue}", "{grey2}", "{orchid}", "{lightred2}", "rainbow"};
+char C_Tag[][] = {"none","rainbow", "{darkred}", "{green}", "{lightgreen}", "{red}", "{blue}", "{olive}", "{lime}", "{lightred}", "{purple}", "{grey}", "{yellow}", "{orange}", "{bluegrey}", "{lightblue}", "{darkblue}", "{grey2}", "{orchid}", "{lightred2}"};
 
 #define IDAYS 26
 
-#define VERSION "0.4"
+#define VERSION "0.4.1"
 
 char g_sClantag[MAXPLAYERS + 1][128], g_sChattag[MAXPLAYERS + 1][128],
 	g_sColorChattag[MAXPLAYERS + 1][128];
@@ -115,7 +115,7 @@ public Action Menu_Colors(int client)
     Menu menu = new Menu(MenuHandler1);
     menu.SetTitle("Select your chattag color");
     char name[64];
-    for (int i = Color_Default; i < Color_Lightred2; i++)
+    for (int i = 0; i < sizeof(C_Tag); i++)
     {
     	Format(name, 64, C_Tag[i]);
     	ReplaceString(name, 64, "{", "");
@@ -553,7 +553,7 @@ public Action OnClientSayCommand(int client, const char[] command, const char[] 
 {
 	if (StrContains(command, "say") == -1)return;
 	
-	if(StrEqual(g_sColorChattag[client], "rainbow") || !StrEqual(g_sChattag[client], "none"))
+	if(StrEqual(g_sColorChattag[client], "rainbow") && !StrEqual(g_sChattag[client], "none"))
 	{
 		ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
 		
@@ -570,7 +570,7 @@ public void OnClientSayCommand_Post(int client, const char[] command, const char
 {
 	if (StrContains(command, "say") == -1)return;
 	
-	if(StrEqual(g_sColorChattag[client], "rainbow") || !StrEqual(g_sChattag[client], "none"))
+	if(StrEqual(g_sColorChattag[client], "rainbow") && !StrEqual(g_sChattag[client], "none"))
 	{
 		ChatProcessor_RemoveClientTag(client, _temp[client]);
 		
