@@ -4,6 +4,7 @@
 
 - Add a entry on databases.cfg called "franug_tagsselector"
 - Drop the smx to plugins folder.
+- Create the file "addons/sourcemod/configs/tagsselector_blacklist.txt" and put here the disallowed words (one per line).
 
 ### Required: 
 
@@ -14,7 +15,3 @@
 - sm_setmyclantag
 - sm_setmychattag
 - sm_setmycolorchattag
-
-### TODO List:
-
-- The disallowed list.
