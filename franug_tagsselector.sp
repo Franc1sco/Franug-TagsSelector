@@ -47,7 +47,7 @@ char C_Tag[][] = {"none","rainbow", "{darkred}", "{green}", "{lightgreen}", "{re
 
 #define IDAYS 26
 
-#define VERSION "0.4.2"
+#define VERSION "0.4.3"
 
 char g_sClantag[MAXPLAYERS + 1][128], g_sChattag[MAXPLAYERS + 1][128],
 	g_sColorChattag[MAXPLAYERS + 1][128];
@@ -94,15 +94,35 @@ public int MenuHandler1(Menu menu, MenuAction action, int client, int param2)
     /* If an option was selected, tell the client about the item. */
     if (action == MenuAction_Select)
     {
+    	
+		if(StrEqual(g_sColorChattag[client], "rainbow") && !StrEqual(g_sChattag[client], "none"))
+		{
+			ChatProcessor_RemoveClientTag(client, _temp[client]);
+			
+			ChatProcessor_AddClientTag(client, g_sChattag[client]);
+		}
 		char color[128];
 		menu.GetItem(param2, color, sizeof(color));
         
 		strcopy(g_sColorChattag[client], 128, color);
+		
+		char name[64];
+		Format(name, 64, color);
+		ReplaceString(name, 64, "{", "");
+		ReplaceString(name, 64, "}", "");
+		
+		PrintToChat(client, "Color changed to %s", name);
         
 		if(!StrEqual(g_sChattag[client], "none"))
 		{
+			
 			if(!StrEqual(g_sColorChattag[client], "rainbow"))
-        		ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
+			{
+				if(StrEqual(g_sColorChattag[client], "none"))
+        			ChatProcessor_SetTagColor(client, g_sChattag[client], "");
+				else
+        			ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
+        	}
 			else{
 				ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
 		
@@ -136,7 +156,7 @@ public Action Menu_Colors(int client)
     	menu.AddItem(C_Tag[i], name);
     }
     //menu.AddItem("yes", "Yes");
-    menu.ExitButton = false;
+    menu.ExitButton = true;
     menu.Display(client, 0);
 }
 
@@ -186,27 +206,33 @@ public Action Command_Chattag(int client, int args)
 		
 	//strcopy(g_sChattag[client], 128, SayText);
 	
-	Format(g_sChattag[client], 128, " %s ", SayText);
-	
-	ChatProcessor_AddClientTag(client, g_sChattag[client]);
+	if(!StrEqual(SayText, "none"))
+		Format(g_sChattag[client], 128, " %s ", SayText);
+	else
+		Format(g_sChattag[client], 128, "%s", SayText);
 	
 	//if(!StrEqual(g_sColorChattag[client], "none") && !StrEqual(g_sColorChattag[client], "rainbow"))
 	//	ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
 	
-	if(!StrEqual(g_sColorChattag[client], "none"))
+	if(!StrEqual(g_sChattag[client], "none"))
 	{
-		
-		if(!StrEqual(g_sColorChattag[client], "rainbow"))
-			ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
-		else{
+		ChatProcessor_AddClientTag(client, g_sChattag[client]);
+	
+		if(!StrEqual(g_sColorChattag[client], "none"))
+		{
 			
-			ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
-		
-			char newbuffer[128];
-			String_Rainbow(g_sChattag[client], newbuffer, 128);
-			strcopy(_temp[client], 128, newbuffer);
+			if(!StrEqual(g_sColorChattag[client], "rainbow"))
+				ChatProcessor_SetTagColor(client, g_sChattag[client], g_sColorChattag[client]);
+			else{
+				
+				ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
 			
-			ChatProcessor_AddClientTag(client, _temp[client]);
+				char newbuffer[128];
+				String_Rainbow(g_sChattag[client], newbuffer, 128);
+				strcopy(_temp[client], 128, newbuffer);
+				
+				ChatProcessor_AddClientTag(client, _temp[client]);
+			}
 		}
 	}
 	
