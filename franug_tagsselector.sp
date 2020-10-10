@@ -47,7 +47,7 @@ char C_Tag[][] = {"none","rainbow", "{darkred}", "{green}", "{lightgreen}", "{re
 
 #define IDAYS 26
 
-#define VERSION "0.4.3"
+#define VERSION "0.4.4"
 
 char g_sClantag[MAXPLAYERS + 1][128], g_sChattag[MAXPLAYERS + 1][128],
 	g_sColorChattag[MAXPLAYERS + 1][128];
@@ -57,6 +57,8 @@ bool g_bChecked[MAXPLAYERS + 1];
 char g_sSQLBuffer[3096];
 
 bool g_bIsMySQl;
+
+char _dTag[MAXPLAYERS + 1][64];
 
 char _temp[MAXPLAYERS + 1][128];
 
@@ -70,6 +72,9 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_setmyclantag", Command_Clantag);
 	RegConsoleCmd("sm_setmychattag", Command_Chattag);
 	RegConsoleCmd("sm_setmycolorchattag", Command_ColorChattag);
+	RegConsoleCmd("sm_removemyclantag", Command_RClantag);
+	RegConsoleCmd("sm_removemychattag", Command_RChattag);
+	//RegConsoleCmd("sm_removemycolorchattag", Command_RColorChattag);
 	
 	SQL_TConnect(OnSQLConnect, "franug_tagsselector");
 	
@@ -207,7 +212,10 @@ public Action Command_Chattag(int client, int args)
 	//strcopy(g_sChattag[client], 128, SayText);
 	
 	if(!StrEqual(SayText, "none"))
-		Format(g_sChattag[client], 128, " %s ", SayText);
+	{
+		//ChatProcessor_SwapClientTags(
+		Format(g_sChattag[client], 128, "%s ", SayText);
+	}
 	else
 		Format(g_sChattag[client], 128, "%s", SayText);
 	
@@ -238,6 +246,25 @@ public Action Command_Chattag(int client, int args)
 	
 	ReplyToCommand(client, "Chattag changed to %s", SayText);
 		
+	return Plugin_Handled;
+}
+
+public Action Command_RChattag(int client, int args)
+{
+	
+	if(StrEqual(g_sChattag[client], "none"))
+	{
+		ReplyToCommand(client, "You already dont have a chattag");
+		
+		return Plugin_Handled;
+	}
+	
+	ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
+	
+	strcopy(g_sChattag[client], 128, "none");
+	
+	ReplyToCommand(client, "Chattag removed");
+	
 	return Plugin_Handled;
 }
 
@@ -278,9 +305,31 @@ public Action Command_Clantag(int client, int args)
 		
 	strcopy(g_sClantag[client], 128, SayText);
 	
-	CS_SetClientClanTag(client, g_sClantag[client]);
+	if(StrEqual(g_sClantag[client], "none"))
+	{
+		CS_SetClientClanTag(client, _dTag[client]);
+	}
+	else
+		CS_SetClientClanTag(client, g_sClantag[client]);
 	
 	ReplyToCommand(client, "Clantag changed to %s", g_sClantag[client]);
+		
+	return Plugin_Handled;
+}
+
+public Action Command_RClantag(int client, int args)
+{
+	if(StrEqual(g_sClantag[client], "none"))
+	{
+		ReplyToCommand(client, "You already dont have a clantag");
+		
+		return Plugin_Handled;
+	}
+	strcopy(g_sClantag[client], 128, "none");
+	
+	CS_SetClientClanTag(client, _dTag[client]);
+	
+	ReplyToCommand(client, "Clantag removed");
 		
 	return Plugin_Handled;
 }
@@ -291,6 +340,10 @@ public void OnClientSettingsChanged(int client)
 	
 	if(!StrEqual(g_sClantag[client], "none"))
 		CS_SetClientClanTag(client, g_sClantag[client]);
+	else{
+		CS_GetClientClanTag(client, _dTag[client], 64);
+	}
+		
 }
 
 
@@ -364,6 +417,8 @@ public void InsertSQLNewPlayer(int client)
 	g_sColorChattag[client] = "none";
 	g_sChattag[client] = "none";
 	
+	CS_GetClientClanTag(client, _dTag[client], 64);
+	
 	g_bChecked[client] = true;
 }
 
@@ -409,6 +464,8 @@ public int CheckSQLSteamIDCallback(Handle owner, Handle hndl, char [] error, any
 	SQL_FetchString(hndl, 0, g_sClantag[client], 128);
 	SQL_FetchString(hndl, 1, g_sChattag[client], 128);
 	SQL_FetchString(hndl, 2, g_sColorChattag[client], 128);
+	
+	CS_GetClientClanTag(client, _dTag[client], 64);
 	
 	if(!StrEqual(g_sClantag[client], "none") && IsClientInGame(client))
 		CS_SetClientClanTag(client, g_sClantag[client]);
@@ -474,6 +531,7 @@ public void OnClientDisconnect(int client)
 	g_sClantag[client] = "none";
 	g_sColorChattag[client] = "none";
 	g_sChattag[client] = "none";
+	_dTag[client] = "";
 	
 	strcopy(_temp[client], 128, "");
 }
@@ -618,6 +676,14 @@ int RandomColor()
 
 	return '\x01';
 }
+/*
+public void CP_OnAddClientTagPost(int client, int index, const char[] tag)
+{
+	if(!StrEqual(g_sChattag[client], "none") && !StrEqual(g_sChattag[client], tag))
+	{
+		ChatProcessor_RemoveClientTag(client, tag);
+	}
+}*/
 
 ////////////////////
 // Chat hook

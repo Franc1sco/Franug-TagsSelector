@@ -15,3 +15,5 @@
 - sm_setmyclantag
 - sm_setmychattag
 - sm_setmycolorchattag
+- sm_removemyclantag
+- sm_removemychattag
