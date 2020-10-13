@@ -20,6 +20,8 @@
 #include <sdktools>
 #include <chat-processor>
 
+native Store_GetEquippedItem(client, String:type[], slot=0);
+
 enum
 {
  	Color_Default = 0,
@@ -47,7 +49,7 @@ char C_Tag[][] = {"none","rainbow", "{darkred}", "{green}", "{lightgreen}", "{re
 
 #define IDAYS 26
 
-#define VERSION "0.4.4"
+#define VERSION "0.4.5"
 
 char g_sClantag[MAXPLAYERS + 1][128], g_sChattag[MAXPLAYERS + 1][128],
 	g_sColorChattag[MAXPLAYERS + 1][128];
@@ -62,13 +64,26 @@ char _dTag[MAXPLAYERS + 1][64];
 
 char _temp[MAXPLAYERS + 1][128];
 
+ConVar cv_flag;
+
+char g_AdmFlag[64];
+
 // DB handle
 Handle g_hDB = INVALID_HANDLE;
 
 Handle _blacklist;
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+	MarkNativeAsOptional("Store_GetEquippedItem");
+
+	return APLRes_Success;
+}
+
 public void OnPluginStart()
 {
+	cv_flag = CreateConVar("sm_tagselector_flag", "a", "admin flag required for use the features. Leave in blank for public access");
+	
 	RegConsoleCmd("sm_setmyclantag", Command_Clantag);
 	RegConsoleCmd("sm_setmychattag", Command_Chattag);
 	RegConsoleCmd("sm_setmycolorchattag", Command_ColorChattag);
@@ -79,6 +94,15 @@ public void OnPluginStart()
 	SQL_TConnect(OnSQLConnect, "franug_tagsselector");
 	
 	_blacklist = CreateArray(128);
+	
+	HookConVarChange(cv_flag, CVarChange);
+	
+	GetConVarString(cv_flag, g_AdmFlag, 64);
+}
+
+public void CVarChange(Handle convar, const char[] oldValue, const char[] newValue) {
+
+	GetConVarString(cv_flag, g_AdmFlag, 64);
 }
 
 public void OnMapStart()
@@ -88,6 +112,12 @@ public void OnMapStart()
 
 public Action Command_ColorChattag(int client, int args)
 {
+	
+	if(!HasPermission(client, g_AdmFlag))
+	{
+		ReplyToCommand(client, "You dont have access");
+		return Plugin_Handled;
+	}
 	Menu_Colors(client);
 	
 		
@@ -167,6 +197,21 @@ public Action Menu_Colors(int client)
 
 public Action Command_Chattag(int client, int args)
 {
+	
+	if(!HasPermission(client, g_AdmFlag))
+	{
+		ReplyToCommand(client, "You dont have access");
+		return Plugin_Handled;
+	}
+	
+	if(GetFeatureStatus(FeatureType_Native, "Store_GetEquippedItem") == FeatureStatus_Available
+	&& Store_GetEquippedItem(client, "nametag") >= 0)
+	{
+		ReplyToCommand(client, "You need to unequip your chattag on the !shop for use this command.");
+		
+		return Plugin_Handled;
+	}
+	
 	decl String:SayText[512];
 	GetCmdArgString(SayText,sizeof(SayText));
 	
@@ -251,6 +296,11 @@ public Action Command_Chattag(int client, int args)
 
 public Action Command_RChattag(int client, int args)
 {
+	if(!HasPermission(client, g_AdmFlag))
+	{
+		ReplyToCommand(client, "You dont have access");
+		return Plugin_Handled;
+	}
 	
 	if(StrEqual(g_sChattag[client], "none"))
 	{
@@ -270,6 +320,18 @@ public Action Command_RChattag(int client, int args)
 
 public Action Command_Clantag(int client, int args)
 {
+	if(!HasPermission(client, g_AdmFlag))
+	{
+		ReplyToCommand(client, "You dont have access");
+		return Plugin_Handled;
+	}
+	
+	if(!HasPermission(client, g_AdmFlag))
+	{
+		ReplyToCommand(client, "You dont have access");
+		return Plugin_Handled;
+	}
+	
 	decl String:SayText[512];
 	GetCmdArgString(SayText,sizeof(SayText));
 	
@@ -319,6 +381,12 @@ public Action Command_Clantag(int client, int args)
 
 public Action Command_RClantag(int client, int args)
 {
+	if(!HasPermission(client, g_AdmFlag))
+	{
+		ReplyToCommand(client, "You dont have access");
+		return Plugin_Handled;
+	}
+	
 	if(StrEqual(g_sClantag[client], "none"))
 	{
 		ReplyToCommand(client, "You already dont have a clantag");
@@ -533,6 +601,8 @@ public void OnClientDisconnect(int client)
 	g_sChattag[client] = "none";
 	_dTag[client] = "";
 	
+	g_bChecked[client] = false;
+	
 	strcopy(_temp[client], 128, "");
 }
 
@@ -542,7 +612,7 @@ public void OnClientPostAdminCheck(int client)
 	g_sColorChattag[client] = "none";
 	g_sChattag[client] = "none";
 	
-	if(!IsFakeClient(client)) CheckSQLSteamID(client);
+	if(!IsFakeClient(client) && HasPermission(client, g_AdmFlag)) CheckSQLSteamID(client);
 }
 
 public void PruneDatabase()
@@ -676,14 +746,14 @@ int RandomColor()
 
 	return '\x01';
 }
-/*
+
 public void CP_OnAddClientTagPost(int client, int index, const char[] tag)
 {
 	if(!StrEqual(g_sChattag[client], "none") && !StrEqual(g_sChattag[client], tag))
 	{
 		ChatProcessor_RemoveClientTag(client, tag);
 	}
-}*/
+}
 
 ////////////////////
 // Chat hook
@@ -726,3 +796,39 @@ public void OnClientSayCommand_Post(int client, const char[] command, const char
 		
 	}
 }
+
+stock bool HasPermission(int iClient, char[] flagString) 
+{
+	if (StrEqual(flagString, "")) 
+	{
+		return true;
+	}
+	
+	if(GetUserFlagBits(iClient) & ADMFLAG_ROOT)
+		return true;
+	
+	AdminId admin = GetUserAdmin(iClient);
+	
+	if (admin != INVALID_ADMIN_ID)
+	{
+		int count, found, flags = ReadFlagString(flagString);
+		for (int i = 0; i <= 20; i++) 
+		{
+			if (flags & (1<<i)) 
+			{
+				count++;
+				
+				if (GetAdminFlag(admin, view_as<AdminFlag>(i))) 
+				{
+					found++;
+				}
+			}
+		}
+
+		if (count == found) {
+			return true;
+		}
+	}
+
+	return false;
+} 

@@ -17,3 +17,7 @@
 - sm_setmycolorchattag
 - sm_removemyclantag
 - sm_removemychattag
+
+### Cvar (put in server.cfg):
+
+- sm_tagselector_flag "a" // admin flag required for use the features. Leave in blank for public access
