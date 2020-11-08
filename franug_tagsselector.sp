@@ -49,7 +49,7 @@ char C_Tag[][] = {"none","rainbow", "{darkred}", "{green}", "{lightgreen}", "{re
 
 #define IDAYS 26
 
-#define VERSION "0.4.5"
+#define VERSION "0.5"
 
 char g_sClantag[MAXPLAYERS + 1][128], g_sChattag[MAXPLAYERS + 1][128],
 	g_sColorChattag[MAXPLAYERS + 1][128];
@@ -165,7 +165,7 @@ public int MenuHandler1(Menu menu, MenuAction action, int client, int param2)
 				String_Rainbow(g_sChattag[client], newbuffer, 128);
 				strcopy(_temp[client], 128, newbuffer);
 				
-				ChatProcessor_AddClientTag(client, _temp[client]);
+				//ChatProcessor_AddClientTag(client, _temp[client]);
 			}
         }
     
@@ -250,7 +250,7 @@ public Action Command_Chattag(int client, int args)
 		if(!StrEqual(g_sColorChattag[client], "rainbow"))
 			ChatProcessor_RemoveClientTag(client, g_sChattag[client]);
 		else{
-			ChatProcessor_RemoveClientTag(client, _temp[client]);
+			//ChatProcessor_RemoveClientTag(client, _temp[client]);
 		}
 	}
 		
@@ -284,7 +284,7 @@ public Action Command_Chattag(int client, int args)
 				String_Rainbow(g_sChattag[client], newbuffer, 128);
 				strcopy(_temp[client], 128, newbuffer);
 				
-				ChatProcessor_AddClientTag(client, _temp[client]);
+				//ChatProcessor_AddClientTag(client, _temp[client]);
 			}
 		}
 	}
@@ -554,7 +554,7 @@ public int CheckSQLSteamIDCallback(Handle owner, Handle hndl, char [] error, any
 			String_Rainbow(g_sChattag[client], newbuffer, 128);
 			strcopy(_temp[client], 128, newbuffer);
 			
-			ChatProcessor_AddClientTag(client, _temp[client]);
+			//ChatProcessor_AddClientTag(client, _temp[client]);
 		}
 	}
 	
@@ -786,13 +786,13 @@ public void OnClientSayCommand_Post(int client, const char[] command, const char
 		//ChatProcessor_AddClientTag(client, g_sChattag[client]);
 		
 		
-		ChatProcessor_RemoveClientTag(client, _temp[client]);
+		//ChatProcessor_RemoveClientTag(client, _temp[client]);
 		
 		char newbuffer[128];
 		String_Rainbow(g_sChattag[client], newbuffer, 128);
 		strcopy(_temp[client], 128, newbuffer);
 		
-		ChatProcessor_AddClientTag(client, _temp[client]);
+		//ChatProcessor_AddClientTag(client, _temp[client]);
 		
 	}
 }
@@ -832,3 +832,18 @@ stock bool HasPermission(int iClient, char[] flagString)
 
 	return false;
 } 
+
+public Action CP_OnChatMessage(int& client, ArrayList recipients, char[] flagstring, char[] name, char[] message, bool & processcolors, bool & removecolors)
+{
+	Action result = Plugin_Continue;
+	
+	if(StrEqual(g_sColorChattag[client], "rainbow") && !StrEqual(g_sChattag[client], "none"))
+	{
+		char newname[256];
+		Format(newname, 256, " %s {teamcolor}%s", _temp[client], name);
+		strcopy(name, 256, newname);
+		result = Plugin_Changed;
+	}
+	
+	return result; 
+}
